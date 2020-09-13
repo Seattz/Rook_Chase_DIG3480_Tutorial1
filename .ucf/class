@@ -1,0 +1,138 @@
+#!/usr/bin/env bash
+source .ucf/.env
+class_version=1
+template="https://github.com/UCF-GaiM/dig3480-f20-tutorial-roll-a-ball.git"
+if [ $# -ge 1 ]; then
+  if [[ $1 = "-v" ]]; then
+    echo $class_version
+    exit 0
+  elif [[ $1 = "--template" ]]; then
+    echo $template
+    exit 0
+  elif [[ $1 = "test" ]]; then
+    if [[ $1 = "test" && ! -z $2 ]]; then
+      echo "Setting up test frameworks! Adding test files"
+      mkdir -p Assets/Tests/Runtime
+      # Download tests here?
+      cp .ucf/files/Runtime/PlayTests.asmdef* Assets/Tests/Runtime
+      case $2 in
+        "rm")
+          rm -rf Assets/Tests
+        ;;
+        "1")
+          # First, check that the first set of files necessary are present:
+          # -
+          if [[ ! -f Assets/Scenes/MiniGame.unity ]]; then 
+            echo "Error: Need MiniGame scene in Scenes subfolder of Assets."
+            exit 0;
+          fi
+          if [[ ! -f Assets/Scripts/PlayerController.cs ]]; then 
+            echo "Error: Need PlayerController.cs in Scripts subfolder of Assets."
+            exit 0;
+          fi
+          if [[ ! -f Assets/Scripts/CameraController.cs ]]; then 
+            echo "Error: Need CameraController.cs in Scripts subfolder of Assets."
+            exit 0;
+          fi
+          cp .ucf/files/Runtime/TestSetup Assets/Tests/Runtime/TestSetup.cs
+          echo "Setting up first set of tests!"
+        ;;
+        "2")
+          # Second, check that the second set of files necessary are present:
+          # -
+          if [[ ! -f "Assets/Prefabs/Pick Up.prefab" ]]; then 
+            echo "Error: Need \"Pick Up\" prefab in Prefabs subfolder of Assets."
+            exit 0;
+          fi
+          if [[ ! -f "Assets/Scripts/Rotator.cs" ]]; then 
+            echo "Error: Need Rotator.cs script in Script subfolder of Assets."
+            exit 0;
+          fi
+          cp .ucf/files/Runtime/TestPickups Assets/Tests/Runtime/TestPickups.cs
+          echo "Setting up second set of tests!"
+        ;;
+        "3")
+          # Finally, check that the final set of files necessary are present:
+          # -
+          if [[ ! -f "Assets/Prefabs/Pick Up.prefab" ]]; then 
+            echo "Error: Need MiniGame scene in Scenes subfolder of Assets."
+            exit 0;
+          fi
+          PlayerControllerText=`cat Assets/Scripts/PlayerController.cs`
+          if [[ ! $PlayerControllerText =~ countText ]]; then
+            echo "Error: PlayerController must have \"countText\" variable."
+          fi
+          echo "Setting up third set of tests!"
+          cp .ucf/files/Runtime/TestScoring Assets/Tests/Runtime/TestScoring.cs
+        ;;
+        "all")
+          echo "All!"
+          if [[ ! -f "Assets/Scenes/MiniGame.unity" ]]; then 
+            echo "Error: Need MiniGame scene in Scenes subfolder of Assets."
+            exit 0;
+          fi
+          if [[ ! -f "Assets/Scripts/PlayerController.cs" ]]; then 
+            echo "Error: Need PlayerController.cs Script to Scripts subfolder of Assets."
+            exit 0;
+          fi
+          if [[ ! -f "Assets/Scripts/CameraController.cs" ]]; then 
+            echo "Error: Need CameraController.cs Script to Scripts subfolder of Assets."
+            exit 0;
+          fi
+          if [[ ! -f "Assets/Prefabs/Pick Up.prefab" ]]; then 
+            echo "Error: Need \"Pick Up\" prefab in Prefabs subfolder of Assets."
+            exit 0;
+          fi
+          if [[ ! -f "Assets/Scripts/Rotator.cs" ]]; then 
+            echo "Error: Need Rotator.cs script in Script subfolder of Assets."
+            exit 0;
+          fi
+          if [[ ! -f "Assets/Prefabs/Pick Up.prefab" ]]; then 
+            echo "Error: Need MiniGame scene in Scenes subfolder of Assets."
+            exit 0;
+          fi
+          PlayerControllerText=`cat Assets/Scripts/PlayerController.cs`
+          if [[ ! $PlayerControllerText =~ countText ]]; then
+            echo "Error: PlayerController must have \"countText\" variable."
+          fi
+          cp .ucf/files/Runtime/TestSetup Assets/Tests/Runtime/TestSetup.cs
+          cp .ucf/files/Runtime/TestPickups Assets/Tests/Runtime/TestPickups.cs
+          cp .ucf/files/Runtime/TestScoring Assets/Tests/Runtime/TestScoring.cs
+        ;;
+      esac
+      git add -A
+      git commit -m "Adding test files"
+      git push
+      echo "All done, ready to test!"
+    elif [[ $1 = "preflight" ]]; then
+      if [[ $assignmentid -eq 1 ]]; then
+        build=`grep -i '    path: Assets/Scenes/MiniGame.unity' ProjectSettings/EditorBuildSettings.asset`
+        location=$(ls -1 Assets/Scenes/*.unity | grep -i 'minigame')
+        if [[ ! "$build" == "    path: Assets/Scenes/MiniGame.unity" || ! "$location" == "Assets/Scenes/MiniGame.unity" ]]; then
+          if [[ ! "$build" == "    path: Assets/Scenes/MiniGame.unity" && "$location" == "Assets/Scenes/MiniGame.unity" ]]; then
+            # Attempt to correct the build using sed
+            sed -i -- "s#$build#    path: Assets/Scenes/MiniGame.unity#" ProjectSettings/EditorBuildSettings.asset
+            build=`grep -i 'Assets/Scenes/MiniGame.unity' ProjectSettings/EditorBuildSettings.asset`
+          fi
+          if [[ ! "$build" == "    path: Assets/Scenes/MiniGame.unity" || ! "$location" == "Assets/Scenes/MiniGame.unity" ]]; then
+            echo "No scene in build!"
+            echo "Make sure your scene is named \"MiniGame\" (with a capital G) and not \"Minigame\""
+            echo "Currently, your scene is named: $location"
+            echo "Then be sure to save your Unity Project."
+            exit 0;
+          fi        
+        fi
+        if [[ ! -f "Assets/Prefabs/Pick Up.prefab" ]]; then
+          echo "No prefab named \"Pick Up\" found. Make sure it is named exactly that and is in the Prefabs directory."
+          exit 0;
+        fi
+      fi
+      echo "All checks passed!"
+    fi
+  elif [[ $1 = '-h' ]]; then
+    echo "   test <stage>     Add the test framework for the associated stage of the project."
+    echo "                    stage=1 MiniGame unity scene present w/ Playercontroller."
+    echo "                    stage=2 Pick Up prefab created."
+    echo "                    stage=3 Scoring complete."
+  fi
+fi
