@@ -9,17 +9,22 @@ public class PlayerController : MonoBehaviour, RollABallControls.IPlayerActions
     private float speed = 20; 
     public Text countText;
     public Text winText;
+    public Text livesText;
     public RollABallControls controls;
     public Vector2 motion;
+    public GameObject player;
 
     private Rigidbody rb;
     private int count;
+    private int lives;
     
     void Start()
     {
         rb = GetComponent<Rigidbody>();
         count = 0;
         SetCountText ();
+        lives = 3;
+        SetLivesText ();
         winText.text = "";
     }
 
@@ -52,15 +57,37 @@ public class PlayerController : MonoBehaviour, RollABallControls.IPlayerActions
             count = count + 1;
             SetCountText ();
         }
+        else if (other.gameObject.CompareTag("Enemy"))
+        {
+            other.gameObject.SetActive (false);
+            lives = lives - 1;  
+            SetLivesText();
+        }
+        if (count == 10) 
+        {
+        transform.position = new Vector3(0.0f, 0.0f, -300.5f); 
+        }
     }
 
     void SetCountText ()
     {
         countText.text = "Count: " + count.ToString ();
-        if (count >= 11)
+        if (count >= 18)
         {
             winText.text = "You Win! Game created by Chase Rook.";
         }
     }
 
+    void SetLivesText ()
+    {
+        livesText.text = "Lives: " + lives.ToString ();
+        if (lives <= 0)
+        {
+            Destroy(player);
+            winText.text = "You lose! Game created by Chase Rook.";
+        }
+    }
 }
+    
+
+    
